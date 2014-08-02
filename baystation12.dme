@@ -1616,5 +1616,6 @@
 #include "interface\interface.dm"
 #include "interface\skin.dmf"
 #include "maps\cyberiad.dmm"
+#include "maps\NCS Cyberiad.dmm"
 #include "maps\RandomZLevels\clown3.dmm"
 // END_INCLUDE
