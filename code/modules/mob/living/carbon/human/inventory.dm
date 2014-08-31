@@ -9,6 +9,18 @@
 		if(!I)
 			H << "<span class='notice'>You are not holding anything to equip.</span>"
 			return
+
+		if(istype(I, /obj/item/clothing/head/helmet/space/rig)) // If the item to be equipped is a rigid suit helmet
+			src << "\red You must fasten the helmet to a hardsuit first. (Target the head)" // Stop eva helms equipping.
+			return 0
+
+
+		if(istype(I, /obj/item/clothing/suit/space/rig)) // If the item to be equipped is a rigid suit
+			var/obj/item/clothing/suit/space/rig/J = I
+			if(J.equip_time > 0)
+				delay_clothing_equip_to_slot_if_possible(J, 13)  // 13 = suit slot
+				return 0
+
 		if(H.equip_to_appropriate_slot(I))
 			if(hand)
 				update_inv_l_hand(0)
@@ -568,6 +580,10 @@
 				message = "\red <B>[source] is trying to take off [target.wear_id] from [target]'s uniform!</B>"
 			else
 				source << "\blue You try to take off [target.wear_id] from [target]'s uniform!"
+		if("pda")
+			target.attack_log += text("\[[time_stamp()]\] <font color='orange'>Has had their PDA ([target.wear_pda]) removed by [source.name] ([source.ckey])</font>")
+			source.attack_log += text("\[[time_stamp()]\] <font color='red'>Attempted to remove [target.name]'s ([target.ckey]) PDA ([target.wear_pda])</font>")
+			message = "\red <B>[source] is trying to take off [target.wear_pda] from [target]'s uniform!</B>"
 		if("internal")
 			target.attack_log += text("\[[time_stamp()]\] <font color='orange'>Has had their internals toggled by [source.name] ([source.ckey])</font>")
 			source.attack_log += text("\[[time_stamp()]\] <font color='red'>Attempted to toggle [target.name]'s ([target.ckey]) internals</font>")
@@ -683,7 +699,7 @@ It can still be worn/put on as normal.
 			slot_to_process = slot_back
 			if (target.back)
 				strip_item = target.back
-		if("handcuff")		
+		if("handcuff")
 			slot_to_process = slot_handcuffed
 			if (target.handcuffed)
 				strip_item = target.handcuffed

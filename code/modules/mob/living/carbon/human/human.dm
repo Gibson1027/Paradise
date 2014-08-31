@@ -50,12 +50,14 @@
 
 /mob/living/carbon/human/grey/New(var/new_loc)
 	..(new_loc, "Grey")
-	mutations.Add(M_REMOTE_TALK)
+	spell_list += new /obj/effect/proc_holder/spell/wizard/targeted/remotetalk
+
 
 /mob/living/carbon/human/human/New(var/new_loc)
 	..(new_loc, "Human")
 
 /mob/living/carbon/human/diona/New(var/new_loc)
+	h_style = "Bald"
 	..(new_loc, "Diona")
 
 /mob/living/carbon/human/machine/New(var/new_loc)
@@ -104,6 +106,7 @@
 	// Set up DNA.
 	if(!delay_ready_dna)
 		dna.ready_dna(src)
+
 
 /mob/living/carbon/human/Bump(atom/movable/AM as mob|obj, yes)
 	if ((!( yes ) || now_pushing))
@@ -459,6 +462,7 @@
 	<BR><B>(Exo)Suit:</B> <A href='?src=\ref[src];item=suit'>[(wear_suit ? wear_suit : "Nothing")]</A>
 	<BR><B>Back:</B> <A href='?src=\ref[src];item=back'>[(back ? back : "Nothing")]</A> [((istype(wear_mask, /obj/item/clothing/mask) && istype(back, /obj/item/weapon/tank) && !( internal )) ? text(" <A href='?src=\ref[];item=internal'>Set Internal</A>", src) : "")]
 	<BR><B>ID:</B> <A href='?src=\ref[src];item=id'>[(wear_id ? wear_id : "Nothing")]</A>
+	<BR><B>PDA:</B> <A href='?src=\ref[src];item=pda'>[(wear_pda ? wear_pda : "Nothing")]</A>
 	<BR><B>Suit Storage:</B> <A href='?src=\ref[src];item=s_store'>[(s_store ? s_store : "Nothing")]</A>
 	<BR>[(handcuffed ? text("<A href='?src=\ref[src];item=handcuff'>Handcuffed</A>") : text("<A href='?src=\ref[src];item=handcuff'>Not Handcuffed</A>"))]
 	<BR>[(legcuffed ? text("<A href='?src=\ref[src];item=legcuff'>Legcuffed</A>") : text(""))]
@@ -1086,7 +1090,8 @@
 					H.brainmob.mind.transfer_to(src)
 					del(H)
 
-	for(var/datum/organ/internal/I in internal_organs)
+	for(var/name in internal_organs_by_name)
+		var/datum/organ/internal/I = internal_organs_by_name[name]
 		I.damage = 0
 
 	for (var/ID in virus2)
@@ -1106,6 +1111,26 @@
 		src.custom_pain("You feel a stabbing pain in your chest!", 1)
 		L.damage = L.min_bruised_damage
 
+//Gave the rupture_lung() call it's own proc to have much more control over it.
+/mob/living/carbon/human/proc/try_lung_rupture(argBreath)
+	var/datum/gas_mixture/environment = loc.return_air()
+	var/datum/gas_mixture/breath = argBreath	
+	var/pressure = environment.return_pressure()
+	var/adjusted_pressure = calculate_affecting_pressure(pressure)
+	
+	//High kPa
+	if(!is_lung_ruptured() && breath.total_moles > BREATH_MOLES * 5)
+		if(prob(5))
+			rupture_lung()
+		return
+	//Low kPa
+	else if(!is_lung_ruptured() && internal && adjusted_pressure <= species.hazard_low_pressure)
+		if(internal.distribute_pressure >= species.warning_low_pressure)
+			if(prob(33))
+				rupture_lung()
+			return
+	else
+		return
 /*
 /mob/living/carbon/human/verb/simulate()
 	set name = "sim"

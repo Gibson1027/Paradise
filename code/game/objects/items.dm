@@ -151,12 +151,56 @@
 		//canremove==0 means that object may not be removed. You can still wear it. This only applies to clothing. /N
 		if(!src.canremove)
 			return 0
+
+		if(istype(user,/mob/living/carbon/human))
+			if(istype(src, /obj/item/clothing/suit/space/rig)) // If the item to be unequipped is a rigid suit
+				if(user.delay_clothing_u_equip(src) == 0)
+					return 0
+			else
+				user.u_equip(src)
 		else
 			user.u_equip(src)
+
+		/*
+			if(istype(user,/mob/living/carbon/human))
+				var/mob/living/carbon/human/H = user
+				if(istype(src, /obj/item/clothing/suit/space/rig)) // If the item to unequip item is a rigid suit
+					if(! istype(H.head, /obj/item/clothing/head/helmet/space/rig)) // If the person is NOT wearing a rigid suit helmet
+						var/tempX = H.x
+						var/tempY = H.y
+						H << "\blue You unfastening the seals and clambering out of the [src]. (This will take a while)."
+						var/obj/item/clothing/head/helmet/space/rig/this_rig = src
+						var/equip_time = round(this_rig.equip_time/10)
+						var/i
+						for(i=1; i<=equip_time; i++)
+							sleep (10) // Check if they've moved every 10 time units
+							if ((tempX != usr.x) || (tempY != usr.y))
+								H << "\red \The [src] is too fiddly to remove whilst moving."
+								return 0
+						H << "\blue You finish removing the [src]."
+					else
+						H << "\red You must remove \the [H.head] first."
+						return 0
+
+				if(istype(src, /obj/item/clothing/head/helmet/space/rig)) // If the item to unequip is a rigid suit helmet
+					var/tempX = H.x
+					var/tempY = H.y
+					H << "\blue You start unfastening the [src].  (This will take a while)."
+					var/obj/item/clothing/suit/space/rig/this_helmet = src
+					var/equip_time = round(this_helmet.equip_time/10)
+					var/i
+					for(i=1; i<=equip_time; i++)
+						sleep (10) // Check if they've moved every 10 time units
+						if ((tempX != usr.x) || (tempY != usr.y))
+							H << "\red \The [src] is too fiddly to remove whilst moving."
+							return 0
+					H << "\blue You finish removing the [src]."
+		*/
 	else
 		if(isliving(src.loc))
 			return 0
 		user.next_move = max(user.next_move+2,world.time + 2)
+
 	src.pickup(user)
 	add_fingerprint(user)
 	user.put_in_active_hand(src)
@@ -616,10 +660,10 @@
 		var/datum/organ/internal/eyes/eyes = H.internal_organs_by_name["eyes"]
 		if(!eyes)
 			return
-		eyes.damage += rand(3,4)
+		eyes.take_damage(rand(3,4), 1)
 		if(eyes.damage >= eyes.min_bruised_damage)
 			if(M.stat != 2)
-				if(eyes.robotic <= 1) //robot eyes bleeding might be a bit silly
+				if(!(istype(eyes, /datum/organ/internal/eyes/robotic)) || istype(eyes, /datum/organ/internal/eyes/assisted)) //robot eyes bleeding might be a bit silly
 					M << "\red Your eyes start to bleed profusely!"
 			if(prob(50))
 				if(M.stat != 2)
